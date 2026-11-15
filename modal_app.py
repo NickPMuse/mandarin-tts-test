@@ -61,13 +61,11 @@ cosyvoice_image = (
     base_image
     .run_commands(
         "git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice",
-        # CosyVoice requirements include openai-whisper, whose setup.py
-        # imports pkg_resources, which setuptools 81 removed. Pin setuptools
-        # and build without isolation so the build uses the pinned one.
-        # Pre-install numpy and Cython first: with no build isolation, some
-        # packages need them present at build time.
-        "pip install 'setuptools<81' wheel numpy Cython",
-        "cd /opt/CosyVoice && pip install --no-build-isolation -r requirements.txt",
+        # openai-whisper is excluded: it is only used for ASR-side tooling,
+        # not TTS inference, and its setup.py imports pkg_resources, which
+        # setuptools 81 removed, so it cannot build on a modern toolchain.
+        # The rest of requirements.txt installs with normal isolated builds.
+        "cd /opt/CosyVoice && grep -v openai-whisper requirements.txt > requirements-tts.txt && pip install -r requirements-tts.txt",
         "pip install huggingface_hub soundfile torchaudio",
     )
     .env({"PYTHONPATH": "/opt/CosyVoice"})
