@@ -55,7 +55,6 @@ base_image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git", "ffmpeg", "libsndfile1")
     .env(common_env)
-    .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
 
 cosyvoice_image = (
@@ -66,6 +65,7 @@ cosyvoice_image = (
         "pip install huggingface_hub soundfile torchaudio",
     )
     .env({"PYTHONPATH": "/opt/CosyVoice"})
+    .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
 
 qwen_image = (
@@ -84,6 +84,7 @@ indextts_image = (
     .run_commands(
         "git clone --depth 1 https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice"
     )
+    .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
 
 
