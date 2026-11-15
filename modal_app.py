@@ -64,7 +64,9 @@ cosyvoice_image = (
         # CosyVoice requirements include openai-whisper, whose setup.py
         # imports pkg_resources, which setuptools 81 removed. Pin setuptools
         # and build without isolation so the build uses the pinned one.
-        "pip install 'setuptools<81' wheel",
+        # Pre-install numpy and Cython first: with no build isolation, some
+        # packages need them present at build time.
+        "pip install 'setuptools<81' wheel numpy Cython",
         "cd /opt/CosyVoice && pip install --no-build-isolation -r requirements.txt",
         "pip install huggingface_hub soundfile torchaudio",
     )
