@@ -93,16 +93,20 @@ indextts_image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git", "ffmpeg", "libsndfile1")
     .env(common_env)
-    .pip_install("indextts2-inference", "soundfile")
+    .pip_install("huggingface_hub", "soundfile")
     .run_commands(
+        # Reference voice clip for zero-shot cloning, from the CosyVoice repo.
         "git clone --depth 1 https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice",
-        # Same DeepSpeed problem as CosyVoice: transformers imports it and
-        # it fails without a CUDA toolkit. Not needed for inference.
-        "pip uninstall -y deepspeed",
-        # indextts2-inference pulls transformers 5.x, which breaks IndexTTS2
-        # beam search (attention_mask arrives as None in the GPT forward).
-        # The official index-tts repo pins transformers 4.52.1.
-        "pip install 'transformers==4.52.1'",
+        # openai-whisper first, on its own: its setup.py imports pkg_resources,
+        # removed in setuptools 81, so it cannot build in an isolated env.
+        "pip install 'setuptools<81' wheel numpy",
+        "pip install --no-build-isolation 'openai-whisper>=20231117'",
+        # Official index-tts repo, not the third-party indextts2-inference
+        # wrapper: the wrapper targets transformers 5.x, whose beam search
+        # passes attention_mask=None into the GPT forward and crashes it.
+        # The official repo pins transformers 4.52.1 and torch 2.8.
+        "git clone --depth 1 https://github.com/index-tts/index-tts.git /opt/index-tts",
+        "cd /opt/index-tts && pip install -e .",
     )
     .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
@@ -240,11 +244,23 @@ def synth_qwen(sentence_ids: list[str]):
 def synth_indextts2(sentence_ids: list[str]):
     import torch
     import soundfile as sf
-    from indextts import IndexTTS2
+    from huggingface_hub import snapshot_download
+    from indextts.infer_v2 import IndexTTS2
 
     t0 = time.time()
     print(f"prompt wav exists: {os.path.exists(PROMPT_WAV)}", flush=True)
-    tts = IndexTTS2()
+    model_dir = snapshot_download(
+        "IndexTeam/IndexTTS-2", local_dir=f"{MODEL_DIR}/indextts2"
+    )
+    print(f"model ready in {time.time() - t0:.0f}s: {model_dir}", flush=True)
+    tts = IndexTTS2(
+        cfg_path=f"{model_dir}/config.yaml",
+        model_dir=model_dir,
+        use_fp16=True,
+        use_cuda_kernel=False,
+        use_deepspeed=False,
+        use_qwen_emo=False,
+    )
     print(f"model loaded in {time.time() - t0:.0f}s", flush=True)
     if torch.cuda.is_available():
         print(
