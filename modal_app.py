@@ -66,6 +66,12 @@ cosyvoice_image = (
         # setuptools 81 removed, so it cannot build on a modern toolchain.
         # The rest of requirements.txt installs with normal isolated builds.
         "cd /opt/CosyVoice && grep -v openai-whisper requirements.txt > requirements-tts.txt && pip install -r requirements-tts.txt",
+        # DeepSpeed ships with the CosyVoice requirements, but on this image
+        # it breaks the import chain: transformers imports deepspeed, and
+        # deepspeed tries to compile CUDA ops, which fails because the image
+        # has no CUDA toolkit (CUDA_HOME does not exist). DeepSpeed is only
+        # used for training, not TTS inference, so remove it.
+        "pip uninstall -y deepspeed",
         "pip install huggingface_hub soundfile torchaudio",
     )
     .env({"PYTHONPATH": "/opt/CosyVoice"})
@@ -86,7 +92,10 @@ indextts_image = (
     .env(common_env)
     .pip_install("indextts2-inference", "soundfile")
     .run_commands(
-        "git clone --depth 1 https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice"
+        "git clone --depth 1 https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice",
+        # Same DeepSpeed problem as CosyVoice: transformers imports it and
+        # it fails without a CUDA toolkit. Not needed for inference.
+        "pip uninstall -y deepspeed",
     )
     .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
