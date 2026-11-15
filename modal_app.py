@@ -1,0 +1,278 @@
+"""Mandarin TTS test harness, Modal T4 only.
+
+Runs open-source Mandarin TTS models on Nicholas's own Modal account.
+T4 GPU only (USD 0.59/hr, 16 GB VRAM), fp16 / half precision (the T4 has
+no native bf16), single stream, no urgency. Model weights are cached in
+a Modal Volume so re-runs do not re-download them. Audio is written to
+the same Volume and fetched back with `modal volume get`.
+
+No third-party TTS API is used anywhere. Only open-source models running
+on Nicholas's own Modal account.
+
+Usage, from the repo root (run through the GitHub Actions bridge, since
+the Muse VM blocks direct gRPC to Modal; see run_via_bridge.sh):
+
+    modal run modal_app.py --model cosyvoice3
+    modal run modal_app.py --model cosyvoice3 --sentences s01,s08,s10,s11
+    modal run modal_app.py --model qwen3-tts
+    modal run modal_app.py --model indextts2
+
+With no --sentences flag, the four-sentence comparison set is used
+(s01, s08, s10, s11), so every model reads exactly the same sentences.
+"""
+
+import json
+import os
+import time
+
+import modal
+
+APP_NAME = "mandarin-tts-test"
+VOLUME_NAME = "mandarin-tts-cache"
+MODEL_DIR = "/data/models"
+OUTPUT_DIR = "/data/outputs"
+
+# Same reference voice for every zero-shot model: the Mandarin female
+# prompt clip shipped in the Apache-2.0 CosyVoice repo, cloned into the
+# image at build time. Transcript: 希望你以后能够做的比我还好呦。
+PROMPT_TEXT = "You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。"
+PROMPT_WAV = "/opt/CosyVoice/asset/zero_shot_prompt.wav"
+
+# Qwen3-TTS CustomVoice needs no reference clip; it has built-in speakers.
+# Vivian is one of its Chinese preset voices.
+QWEN_SPEAKER = "Vivian"
+QWEN_INSTRUCT = "用自然平稳的语气朗读。"
+
+vol = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
+app = modal.App(APP_NAME)
+
+common_env = {
+    "HF_HOME": "/data/hf",
+    "TOKENIZERS_PARALLELISM": "false",
+}
+
+base_image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .apt_install("git", "ffmpeg", "libsndfile1")
+    .env(common_env)
+    .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
+)
+
+cosyvoice_image = (
+    base_image
+    .run_commands(
+        "git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice",
+        "cd /opt/CosyVoice && pip install -r requirements.txt",
+        "pip install huggingface_hub soundfile torchaudio",
+    )
+    .env({"PYTHONPATH": "/opt/CosyVoice"})
+)
+
+qwen_image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .apt_install("git", "ffmpeg", "libsndfile1")
+    .env(common_env)
+    .pip_install("qwen-tts", "soundfile", "torch", "transformers", "accelerate")
+    .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
+)
+
+indextts_image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .apt_install("git", "ffmpeg", "libsndfile1")
+    .env(common_env)
+    .pip_install("indextts2-inference", "soundfile")
+    .run_commands(
+        "git clone --depth 1 https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice"
+    )
+)
+
+
+def _load_sentences(sentence_ids):
+    with open("/app/test_sentences.json", encoding="utf-8") as f:
+        data = json.load(f)
+    by_id = {s["id"]: s for s in data["sentences"]}
+    return [(sid, by_id[sid]["text"]) for sid in sentence_ids]
+
+
+def _report(model, sid, text, seconds, audio_seconds):
+    rtf = seconds / audio_seconds if audio_seconds else 0
+    print(
+        f"[{model}] {sid} done in {seconds:.1f}s, audio {audio_seconds:.1f}s, "
+        f"RTF {rtf:.2f}: {text}",
+        flush=True,
+    )
+
+
+@app.function(
+    image=cosyvoice_image,
+    gpu="T4",
+    volumes={"/data": vol},
+    timeout=3600,
+    cpu=2,
+    memory=8192,
+)
+def synth_cosyvoice3(sentence_ids: list[str]):
+    import torch
+    import torchaudio
+    from huggingface_hub import snapshot_download
+    from cosyvoice.cli.cosyvoice import AutoModel
+
+    t0 = time.time()
+    model_dir = snapshot_download(
+        "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
+        local_dir=f"{MODEL_DIR}/cosyvoice3",
+    )
+    print(f"model ready in {time.time() - t0:.0f}s: {model_dir}", flush=True)
+    print(f"prompt wav exists: {os.path.exists(PROMPT_WAV)}", flush=True)
+    cosyvoice = AutoModel(model_dir=model_dir)
+    print(f"model loaded in {time.time() - t0:.0f}s total", flush=True)
+    if torch.cuda.is_available():
+        print(
+            f"GPU: {torch.cuda.get_device_name(0)}, "
+            f"VRAM allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB",
+            flush=True,
+        )
+
+    for sid, text in _load_sentences(sentence_ids):
+        s0 = time.time()
+        out_path = f"{OUTPUT_DIR}/cosyvoice3/{sid}.wav"
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        made = False
+        for i, chunk in enumerate(
+            cosyvoice.inference_zero_shot(text, PROMPT_TEXT, PROMPT_WAV, stream=False)
+        ):
+            torchaudio.save(out_path, chunk["tts_speech"], cosyvoice.sample_rate)
+            made = True
+        if not made:
+            raise RuntimeError(f"CosyVoice3 produced no audio for {sid}")
+        import soundfile as sf
+
+        info = sf.info(out_path)
+        _report("cosyvoice3", sid, text, time.time() - s0, info.duration)
+        if torch.cuda.is_available():
+            print(
+                f"peak VRAM: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB",
+                flush=True,
+            )
+    vol.commit()
+    print(f"ALL DONE cosyvoice3 in {time.time() - t0:.0f}s", flush=True)
+
+
+@app.function(
+    image=qwen_image,
+    gpu="T4",
+    volumes={"/data": vol},
+    timeout=3600,
+    cpu=2,
+    memory=8192,
+)
+def synth_qwen(sentence_ids: list[str]):
+    import torch
+    import soundfile as sf
+    from qwen_tts import Qwen3TTSModel
+
+    t0 = time.time()
+    model = Qwen3TTSModel.from_pretrained(
+        "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+        device_map="cuda:0",
+        dtype=torch.float16,
+        attn_implementation="sdpa",
+    )
+    print(f"model loaded in {time.time() - t0:.0f}s", flush=True)
+    if torch.cuda.is_available():
+        print(
+            f"GPU: {torch.cuda.get_device_name(0)}, "
+            f"VRAM allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB",
+            flush=True,
+        )
+
+    for sid, text in _load_sentences(sentence_ids):
+        s0 = time.time()
+        out_path = f"{OUTPUT_DIR}/qwen3-tts/{sid}.wav"
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        wavs, sr = model.generate_custom_voice(
+            text=text,
+            language="Chinese",
+            speaker=QWEN_SPEAKER,
+            instruct=QWEN_INSTRUCT,
+        )
+        sf.write(out_path, wavs[0], sr)
+        info = sf.info(out_path)
+        _report("qwen3-tts", sid, text, time.time() - s0, info.duration)
+        if torch.cuda.is_available():
+            print(
+                f"peak VRAM: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB",
+                flush=True,
+            )
+    vol.commit()
+    print(f"ALL DONE qwen3-tts in {time.time() - t0:.0f}s", flush=True)
+
+
+@app.function(
+    image=indextts_image,
+    gpu="T4",
+    volumes={"/data": vol},
+    timeout=3600,
+    cpu=2,
+    memory=8192,
+)
+def synth_indextts2(sentence_ids: list[str]):
+    import torch
+    import soundfile as sf
+    from indextts import IndexTTS2
+
+    t0 = time.time()
+    print(f"prompt wav exists: {os.path.exists(PROMPT_WAV)}", flush=True)
+    tts = IndexTTS2()
+    print(f"model loaded in {time.time() - t0:.0f}s", flush=True)
+    if torch.cuda.is_available():
+        print(
+            f"GPU: {torch.cuda.get_device_name(0)}, "
+            f"VRAM allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB",
+            flush=True,
+        )
+
+    for sid, text in _load_sentences(sentence_ids):
+        s0 = time.time()
+        out_path = f"{OUTPUT_DIR}/indextts2/{sid}.wav"
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        tts.infer(spk_audio_prompt=PROMPT_WAV, text=text, output_path=out_path)
+        info = sf.info(out_path)
+        _report("indextts2", sid, text, time.time() - s0, info.duration)
+        if torch.cuda.is_available():
+            print(
+                f"peak VRAM: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB",
+                flush=True,
+            )
+    vol.commit()
+    print(f"ALL DONE indextts2 in {time.time() - t0:.0f}s", flush=True)
+
+
+@app.local_entrypoint()
+def main(model: str, sentences: str = ""):
+    with open("tests/test_sentences.json", encoding="utf-8") as f:
+        data = json.load(f)
+    if sentences:
+        ids = [s.strip() for s in sentences.split(",") if s.strip()]
+    else:
+        ids = data["comparison_set"]
+    known = {s["id"] for s in data["sentences"]}
+    unknown = [i for i in ids if i not in known]
+    if unknown:
+        raise ValueError(f"unknown sentence ids: {unknown}")
+    print(f"model={model} sentences={ids}", flush=True)
+    if model == "cosyvoice3":
+        synth_cosyvoice3.remote(ids)
+    elif model == "qwen3-tts":
+        synth_qwen.remote(ids)
+    elif model == "indextts2":
+        synth_indextts2.remote(ids)
+    elif model == "s1-mini":
+        raise NotImplementedError(
+            "OpenAudio S1-mini is not wired up yet: its self-hosted path runs "
+            "through the Fish Speech repo CLI, not a pip package, and the "
+            "fish-audio-sdk on PyPI is the hosted Fish Audio API, which this "
+            "test does not use. See README."
+        )
+    else:
+        raise ValueError(f"unknown model: {model} (cosyvoice3, qwen3-tts, indextts2)")
