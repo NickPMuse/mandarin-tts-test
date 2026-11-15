@@ -61,11 +61,14 @@ cosyvoice_image = (
     base_image
     .run_commands(
         "git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git /opt/CosyVoice",
-        # openai-whisper is excluded: it is only used for ASR-side tooling,
-        # not TTS inference, and its setup.py imports pkg_resources, which
-        # setuptools 81 removed, so it cannot build on a modern toolchain.
-        # The rest of requirements.txt installs with normal isolated builds.
+        # openai-whisper is installed separately below: its setup.py imports
+        # pkg_resources, which setuptools 81 removed, so it cannot build in
+        # an isolated build env. Installed with --no-build-isolation against
+        # a pinned setuptools<81. It is genuinely needed: the CosyVoice
+        # frontend calls whisper.log_mel_spectrogram on the prompt clip.
         "cd /opt/CosyVoice && grep -v openai-whisper requirements.txt > requirements-tts.txt && pip install -r requirements-tts.txt",
+        "pip install 'setuptools<81' wheel numpy",
+        "pip install --no-build-isolation openai-whisper==20231117",
         # DeepSpeed ships with the CosyVoice requirements, but on this image
         # it breaks the import chain: transformers imports deepspeed, and
         # deepspeed tries to compile CUDA ops, which fails because the image
