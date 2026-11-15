@@ -99,6 +99,10 @@ indextts_image = (
         # Same DeepSpeed problem as CosyVoice: transformers imports it and
         # it fails without a CUDA toolkit. Not needed for inference.
         "pip uninstall -y deepspeed",
+        # indextts2-inference pulls transformers 5.x, which breaks IndexTTS2
+        # beam search (attention_mask arrives as None in the GPT forward).
+        # The official index-tts repo pins transformers 4.52.1.
+        "pip install 'transformers==4.52.1'",
     )
     .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
