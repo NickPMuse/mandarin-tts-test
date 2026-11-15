@@ -77,7 +77,7 @@ cosyvoice_image = (
         "pip uninstall -y deepspeed",
         "pip install huggingface_hub soundfile torchaudio",
     )
-    .env({"PYTHONPATH": "/opt/CosyVoice"})
+    .env({"PYTHONPATH": "/opt/CosyVoice:/opt/CosyVoice/third_party/Matcha-TTS"})
     .add_local_file("tests/test_sentences.json", "/app/test_sentences.json")
 )
 
