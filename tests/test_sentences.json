@@ -1,1 +1,171 @@
-{"comparison_note":"s01 polyphone, s08 sandhi, s10 erhua, s11 date plus time plus decimal. Every model reads exactly these four sentences for the listening comparison.","comparison_set":["s01","s08","s10","s11"],"note":"Generic test sentences written for this test only. They are NOT Nicholas's private study notes. The same comparison_set is read by every model so clips can be compared directly.","reference_voice":{"description":"CosyVoice and IndexTTS are zero-shot cloners, so they need a short reference clip. Both use the same one: asset/zero_shot_prompt.wav from the Apache-2.0 CosyVoice repo, a Mandarin female speaker, transcript 希望你以后能够做的比我还好呦. Qwen3-TTS uses its built-in preset speaker Vivian instead, since CustomVoice needs no reference clip.","prompt_text":"You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。","prompt_wav":"asset/zero_shot_prompt.wav from FunAudioLLM/CosyVoice (cloned inside the Modal image, not stored in this repo)"},"sentences":[{"category":"polyphone 长","focus":"长 chang2 (long) twice, then 长 zhang3 (grow up).","id":"s01","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"这条路很长(chang2)，走路要花很长(chang2)时间，他长(zhang3)大以后就明白了。","text":"这条路很长，走路要花很长时间，他长大以后就明白了。"},{"category":"polyphone 行, 还","focus":"行 hang2 (bank) vs 行 xing2 (okay), 还 hai2 (still).","id":"s02","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"银(yin2)行(hang2)今天很忙，行(hang2)长(zhang3)说这件事还(hai2)行(xing2)，让我们先试一试。","text":"银行今天很忙，行长说这件事还行，让我们先试一试。"},{"category":"polyphone 重","focus":"重 zhong4 (heavy) vs 重 chong2 (again).","id":"s03","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"这份工作很重(zhong4)，他重(chong2)新安排了时间，重点是把事情做好。","text":"这份工作很重，他重新安排了时间，重点是把事情做好。"},{"category":"polyphone 乐","focus":"乐 le4 (happy) vs 乐 yue4 (music).","id":"s04","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"音(yin1)乐(yue4)让他很快乐(le4)，他最喜欢在周末听音(yin1)乐(yue4)。","text":"音乐让他很快乐，他最喜欢在周末听音乐。"},{"category":"polyphone 得, 着","focus":"得 dei3 (must) vs de (particle), 着 zhe0 (ongoing state).","id":"s05","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"他觉得这个办法还(hai2)得(dei3)再想想，门还开(kai1)着(zhe0)，灯也亮着(zhe0)。","text":"他觉得这个办法还得再想想，门还开着，灯也亮着。"},{"category":"polyphone 差","focus":"差 cha4 (almost, differ) vs 差 cha1 (about, roughly).","id":"s06","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"这件事差(cha4)一点就成功了，他说差(cha1)不多就行了，别差(cha4)太多。","text":"这件事差一点就成功了，他说差不多就行了，别差太多。"},{"category":"surname 单, 曾","focus":"单 shan4 as a surname (not dan1), 曾 zeng1 as a surname (not ceng2).","id":"s07","pinyin_fix_cosyvoice3":"TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.","pinyin_fix_indextts":"单(shan4)老师说，曾(zeng1)国藩的故事很有意思，请大家先读一读。","text":"单老师说，曾国藩的故事很有意思，请大家先读一读。"},{"category":"tone sandhi 不, 一, third tone","focus":"不 bu4 before 想 xiang3, 不 bu2 before 去 qu4, 一 yi2 before 下 xia4, 好好 hao3 hao3 third-tone pair, 你也 ni3 ye3.","id":"s08","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"我不想去，你也不想去，我们都想好好休息一下。"},{"category":"third-tone run","focus":"你好 ni2 hao3, 我也 wo3 ye3, 雨水 yu3 shui3, 买水果 mai3 shui3 guo3. Listen for whether the first third tone rises.","id":"s09","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"你好，我也很好，雨水很少，我们一起去买水果。"},{"category":"erhua","focus":"院儿, 玩儿, 花儿, 鸟儿. Listen for the rolled r ending, not a separate er syllable.","id":"s10","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"下午我们去小院儿里坐坐，那儿很好玩儿，还有花儿和鸟儿。"},{"category":"date, time, decimal","focus":"Digits written as digits on purpose, to test text normalisation: 2026年11月15日, 3点半, 12.5元.","id":"s11","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"会议定在2026年11月15日下午3点半，费用是12.5元，请提前十分钟到。"},{"category":"decimal, money","focus":"12.5 read as 十二点五, not one-two-point-five. 四块五 as money.","id":"s12","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"费用是12.5元，一共三杯咖啡，每杯四块五。"},{"category":"identifier, number string","focus":"Long digit strings: are they read digit by digit, or garbled as a big number?","id":"s13","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"订单号是202611150123，电话后四位是7522，请核对一下。"},{"category":"proper name, place","focus":"北京大学, 天安门广场. Plain proper names, a control sentence.","id":"s14","pinyin_fix_cosyvoice3":"","pinyin_fix_indextts":"","text":"小明和小红去北京大学听讲座，回来的时候路过天安门广场。"}]}
+{
+  "comparison_note": "s01 polyphone, s08 sandhi, s10 erhua, s11 date plus time plus decimal. Every model reads exactly these four sentences for the listening comparison.",
+  "comparison_set": [
+    "s01",
+    "s08",
+    "s10",
+    "s11"
+  ],
+  "note": "Generic test sentences written for this test only. They are NOT Nicholas's private study notes. The same comparison_set is read by every model so clips can be compared directly.",
+  "reference_voice": {
+    "description": "CosyVoice and IndexTTS are zero-shot cloners, so they need a short reference clip. Both use the same one: asset/zero_shot_prompt.wav from the Apache-2.0 CosyVoice repo, a Mandarin female speaker, transcript 希望你以后能够做的比我还好呦. Qwen3-TTS uses its built-in preset speaker Vivian instead, since CustomVoice needs no reference clip.",
+    "prompt_text": "You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。",
+    "prompt_wav": "asset/zero_shot_prompt.wav from FunAudioLLM/CosyVoice (cloned inside the Modal image, not stored in this repo)"
+  },
+  "sentences": [
+    {
+      "category": "polyphone 长",
+      "focus": "长 chang2 (long) twice, then 长 zhang3 (grow up).",
+      "id": "s01",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "这条路很长(chang2)，走路要花很长(chang2)时间，他长(zhang3)大以后就明白了。",
+      "text": "这条路很长，走路要花很长时间，他长大以后就明白了。"
+    },
+    {
+      "category": "polyphone 行, 还",
+      "focus": "行 hang2 (bank) vs 行 xing2 (okay), 还 hai2 (still).",
+      "id": "s02",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "银(yin2)行(hang2)今天很忙，行(hang2)长(zhang3)说这件事还(hai2)行(xing2)，让我们先试一试。",
+      "text": "银行今天很忙，行长说这件事还行，让我们先试一试。"
+    },
+    {
+      "category": "polyphone 重",
+      "focus": "重 zhong4 (heavy) vs 重 chong2 (again).",
+      "id": "s03",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "这份工作很重(zhong4)，他重(chong2)新安排了时间，重点是把事情做好。",
+      "text": "这份工作很重，他重新安排了时间，重点是把事情做好。"
+    },
+    {
+      "category": "polyphone 乐",
+      "focus": "乐 le4 (happy) vs 乐 yue4 (music).",
+      "id": "s04",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "音(yin1)乐(yue4)让他很快乐(le4)，他最喜欢在周末听音(yin1)乐(yue4)。",
+      "text": "音乐让他很快乐，他最喜欢在周末听音乐。"
+    },
+    {
+      "category": "polyphone 得, 着",
+      "focus": "得 dei3 (must) vs de (particle), 着 zhe0 (ongoing state).",
+      "id": "s05",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "他觉得这个办法还(hai2)得(dei3)再想想，门还开(kai1)着(zhe0)，灯也亮着(zhe0)。",
+      "text": "他觉得这个办法还得再想想，门还开着，灯也亮着。"
+    },
+    {
+      "category": "polyphone 差",
+      "focus": "差 cha4 (almost, differ) vs 差 cha1 (about, roughly).",
+      "id": "s06",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "这件事差(cha4)一点就成功了，他说差(cha1)不多就行了，别差(cha4)太多。",
+      "text": "这件事差一点就成功了，他说差不多就行了，别差太多。"
+    },
+    {
+      "category": "surname 单, 曾",
+      "focus": "单 shan4 as a surname (not dan1), 曾 zeng1 as a surname (not ceng2).",
+      "id": "s07",
+      "pinyin_fix_cosyvoice3": "TBD, verify the pronunciation inpainting format in the CosyVoice3 docs before use, do not guess it.",
+      "pinyin_fix_indextts": "单(shan4)老师说，曾(zeng1)国藩的故事很有意思，请大家先读一读。",
+      "text": "单老师说，曾国藩的故事很有意思，请大家先读一读。"
+    },
+    {
+      "category": "tone sandhi 不, 一, third tone",
+      "focus": "不 bu4 before 想 xiang3, 不 bu2 before 去 qu4, 一 yi2 before 下 xia4, 好好 hao3 hao3 third-tone pair, 你也 ni3 ye3.",
+      "id": "s08",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "我不想去，你也不想去，我们都想好好休息一下。"
+    },
+    {
+      "category": "third-tone run",
+      "focus": "你好 ni2 hao3, 我也 wo3 ye3, 雨水 yu3 shui3, 买水果 mai3 shui3 guo3. Listen for whether the first third tone rises.",
+      "id": "s09",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "你好，我也很好，雨水很少，我们一起去买水果。"
+    },
+    {
+      "category": "erhua",
+      "focus": "院儿, 玩儿, 花儿, 鸟儿. Listen for the rolled r ending, not a separate er syllable.",
+      "id": "s10",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "下午我们去小院儿里坐坐，那儿很好玩儿，还有花儿和鸟儿。"
+    },
+    {
+      "category": "date, time, decimal",
+      "focus": "Digits written as digits on purpose, to test text normalisation: 2026年11月15日, 3点半, 12.5元.",
+      "id": "s11",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "会议定在2026年11月15日下午3点半，费用是12.5元，请提前十分钟到。"
+    },
+    {
+      "category": "decimal, money",
+      "focus": "12.5 read as 十二点五, not one-two-point-five. 四块五 as money.",
+      "id": "s12",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "费用是12.5元，一共三杯咖啡，每杯四块五。"
+    },
+    {
+      "category": "identifier, number string",
+      "focus": "Long digit strings: are they read digit by digit, or garbled as a big number?",
+      "id": "s13",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "订单号是202611150123，电话后四位是7522，请核对一下。"
+    },
+    {
+      "category": "proper name, place",
+      "focus": "北京大学, 天安门广场. Plain proper names, a control sentence.",
+      "id": "s14",
+      "pinyin_fix_cosyvoice3": "",
+      "pinyin_fix_indextts": "",
+      "text": "小明和小红去北京大学听讲座，回来的时候路过天安门广场。"
+    },
+    {
+      "id": "h01",
+      "category": "HSK 3",
+      "focus": "daily routine",
+      "text": "我每天早上七点起床，然后去跑步。",
+      "gloss": "Every morning I get up at seven, then go for a run."
+    },
+    {
+      "id": "h02",
+      "category": "HSK 3",
+      "focus": "plan",
+      "text": "明天我要去图书馆借书，还要买东西。",
+      "gloss": "Tomorrow I will go to the library to borrow books, and buy things too."
+    },
+    {
+      "id": "h03",
+      "category": "HSK 3",
+      "focus": "question",
+      "text": "你喜欢喝茶还是喝咖啡？",
+      "gloss": "Do you like tea or coffee?"
+    },
+    {
+      "id": "h04",
+      "category": "HSK 3",
+      "focus": "past event",
+      "text": "昨天我和朋友一起去看了电影。",
+      "gloss": "Yesterday I went to see a film with a friend."
+    },
+    {
+      "id": "h05",
+      "category": "HSK 3",
+      "focus": "comparison",
+      "text": "这本书比那本书便宜，也很有意思。",
+      "gloss": "This book is cheaper than that book, and also very interesting."
+    },
+    {
+      "id": "h06",
+      "category": "HSK 3",
+      "focus": "number and date",
+      "text": "三月十五日是星期六，我们一起去公园。",
+      "gloss": "March 15 is Saturday, we will go to the park together."
+    }
+  ]
+}
