@@ -14,9 +14,17 @@ settings as the working CustomVoice runs in modal_app.py. Same size
 class as CustomVoice 1.7B, so VRAM should be similar, about 4.2 GB.
 
 Voice designed for this test, in Chinese so it matches the text:
-    温柔、温暖的年轻成年女性声音，音色柔和清晰，语速适中，像在温柔地讲故事。
-In English: a soft, warm, gentle young adult female Mandarin voice,
-smooth and clear, moderate pace, gentle storytelling delivery.
+    成熟稳重的中年女性声音，音色温暖醇厚，
+    语速缓慢平稳，像在娓娓道来地讲故事。
+    用缓慢平稳的语气朗读。
+In English: a mature, steady middle-aged female voice, warm and full
+timbre, slow and steady pace, like telling a story calmly. Read aloud
+in a slow and steady tone.
+
+The first VoiceDesign test used a soft, warm, gentle young adult
+female voice at a moderate pace, and Nicholas said it was too fast
+and sounded too young. This revision is the older, slower version,
+saved as h01-older-slower.wav so the first clip is not overwritten.
 
 Caveat, from the official README: VoiceDesign invents a voice from the
 description on each call, there is no persistent speaker id. To reuse a
@@ -40,10 +48,12 @@ MODEL_DIR = "/data/models"
 OUTPUT_DIR = "/data/outputs/voice-design"
 
 VOICE_DESIGN_INSTRUCT = (
-    "温柔、温暖的年轻成年女性声音，音色柔和清晰，"
-    "语速适中，像在温柔地讲故事。"
+    "成熟稳重的中年女性声音，音色温暖醇厚，"
+    "语速缓慢平稳，像在娓娓道来地讲故事。"
+    "用缓慢平稳的语气朗读。"
 )
 TEXT = "我每天早上七点起床，然后去跑步。"
+OUT_FILE = "h01-older-slower.wav"
 
 vol = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 app = modal.App(APP_NAME)
@@ -85,7 +95,7 @@ def synth_voice_design():
         )
 
     s0 = time.time()
-    out_path = f"{OUTPUT_DIR}/h01.wav"
+    out_path = f"{OUTPUT_DIR}/{OUT_FILE}"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     wavs, sr = model.generate_voice_design(
         text=TEXT,
@@ -95,7 +105,7 @@ def synth_voice_design():
     sf.write(out_path, wavs[0], sr)
     info = sf.info(out_path)
     print(
-        f"[voice-design] h01 done in {time.time() - s0:.1f}s, "
+        f"[voice-design] {OUT_FILE} done in {time.time() - s0:.1f}s, "
         f"audio {info.duration:.2f}s: {TEXT}",
         flush=True,
     )
