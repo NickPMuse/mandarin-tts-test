@@ -14,17 +14,24 @@ settings as the working CustomVoice runs in modal_app.py. Same size
 class as CustomVoice 1.7B, so VRAM should be similar, about 4.2 GB.
 
 Voice designed for this test, in Chinese so it matches the text:
-    成熟稳重的中年女性声音，音色温暖醇厚，
-    语速缓慢平稳，像在娓娓道来地讲故事。
+    台湾口音的中年女性声音，语调温和柔软，
+    语速缓慢平稳，像台湾人讲国语那样，不带儿化音。
     用缓慢平稳的语气朗读。
-In English: a mature, steady middle-aged female voice, warm and full
-timbre, slow and steady pace, like telling a story calmly. Read aloud
-in a slow and steady tone.
+In English: a middle-aged female voice with a Taiwanese accent,
+gentle and soft intonation, slow and steady pace, speaking Mandarin
+the way Taiwanese people do, without erhua. Read aloud in a slow
+and steady tone.
+
+Note: generate_voice_design has a single instruct argument covering
+both voice description and speaking style, so the description and
+the slow-reading instruction are combined into that one string.
 
 The first VoiceDesign test used a soft, warm, gentle young adult
 female voice at a moderate pace, and Nicholas said it was too fast
-and sounded too young. This revision is the older, slower version,
-saved as h01-older-slower.wav so the first clip is not overwritten.
+and sounded too young. A second test used an older, slower
+middle-aged voice, saved as h01-older-slower.wav, still slightly fast.
+This third test asks for a Taiwanese Mandarin accent, saved as
+h01-taiwanese.wav so earlier clips are not overwritten.
 
 Caveat, from the official README: VoiceDesign invents a voice from the
 description on each call, there is no persistent speaker id. To reuse a
@@ -48,12 +55,12 @@ MODEL_DIR = "/data/models"
 OUTPUT_DIR = "/data/outputs/voice-design"
 
 VOICE_DESIGN_INSTRUCT = (
-    "成熟稳重的中年女性声音，音色温暖醇厚，"
-    "语速缓慢平稳，像在娓娓道来地讲故事。"
+    "台湾口音的中年女性声音，语调温和柔软，"
+    "语速缓慢平稳，像台湾人讲国语那样，不带儿化音。"
     "用缓慢平稳的语气朗读。"
 )
 TEXT = "我每天早上七点起床，然后去跑步。"
-OUT_FILE = "h01-older-slower.wav"
+OUT_FILE = "h01-taiwanese.wav"
 
 vol = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 app = modal.App(APP_NAME)
