@@ -48,3 +48,26 @@ The clean reference source was confirmed to exist: JacobLinCool/common_voice_25_
 ## 3. Fine-tuning / LoRA: train a persistent custom voice
 
 Not tested, no fine-tune run was done. The official path is the Qwen3-TTS-Finetuning repo, fine-tuning the Base model on a clean single-speaker dataset. That gives a persistent voice that does not need a reference clip at inference, but it needs recorded training audio and GPU training time, unlike VoiceDesign and Base cloning, which are inference only and need no training. Cost and time were not measured here.
+
+## 10 Taiwanese variations, same day: v01 to v10 on h01
+
+Nicholas did not like the single Taiwanese VoiceDesign clip, so 10 distinct variations were made, all on h01, 我每天早上七点起床，然后去跑步。, all Taiwanese accent, no erhua, slow and steady. Descriptions are in `tests/voice_design_variations.json`, run with `modal_voice_design.py --variation v01` and so on, one bridge run each, T4, about $0.01 each. All 10 clips are 24 kHz mono WAV, verified non-silent. Speech span is first to last sample above a low threshold, so file duration can overstate the spoken part where there is trailing silence.
+
+| Variation | Description in English | Duration | Peak | Speech span | Bridge run |
+| --- | --- | --- | --- | --- | --- |
+| v01 | Taiwanese female, 30s, soft clear, slow steady | 4.72 s | 0.55 | 0.05-4.13 s | 44835901660 |
+| v02 | Taiwanese female, 40s, warm round, slow steady | 5.52 s | 0.65 | 0.07-4.17 s | 44836053794 |
+| v03 | Taiwanese female, 50s, steady gentle, slow steady | 3.52 s | 0.80 | 0.03-3.37 s | 44836223815 |
+| v04 | Taiwanese middle-aged female, lower pitch, soft, slow steady | 4.48 s | 0.68 | 0.07-4.21 s | 44836380731 |
+| v05 | Taiwanese young female, bright soft, slow steady | 3.52 s | 0.36 | 0.03-3.41 s | 44836549700 |
+| v06 | Taiwanese middle-aged female, deep warm, storytelling, very slow steady | 5.36 s | 0.39 | 0.24-4.92 s | 44836699651 |
+| v07 | Taiwanese middle-aged male, warm full, slow steady | 4.80 s | 0.52 | 0.12-4.35 s | 44836866453 |
+| v08 | Taiwanese older male, low steady, slow steady | 5.68 s | 0.26 | 0.47-5.21 s | 44837007885 |
+| v09 | Taiwanese middle-aged female, slightly husky but gentle, slow steady | 3.84 s | 0.57 | 0.07-3.67 s | 44837181021 |
+| v10 | Taiwanese middle-aged female, elegant soft clear, slow steady | 3.68 s | 0.58 | 0.03-3.52 s | 44837347630 |
+
+Clips: `audio/voice-design/taiwanese-v01/h01.wav` through `audio/voice-design/taiwanese-v10/h01.wav`.
+
+Silence notes, not trimmed: v02 has about 1.35 s trailing silence, v06 has about 0.24 s leading silence, v08 has about 0.47 s leading and 0.47 s trailing silence. The rest are mostly clean.
+
+One interruption during the run: the driver process was stopped by a runtime restart while v08 was in flight. The v08 bridge run itself kept going on GitHub and succeeded, and its clip was downloaded and verified after the restart. v09 and v10 were then run with the same driver. No variation was dispatched twice.
