@@ -15,6 +15,7 @@ the Muse VM blocks direct gRPC to Modal; see run_via_bridge.sh):
     modal run modal_app.py --model cosyvoice3
     modal run modal_app.py --model cosyvoice3 --sentences s01,s08,s10,s11
     modal run modal_app.py --model qwen3-tts
+    modal run modal_app.py --model qwen3-tts --sentences h01,h02,h03,h04,h05,h06 --speaker Serena
     modal run modal_app.py --model indextts2
 
 With no --sentences flag, the four-sentence comparison set is used
@@ -39,8 +40,12 @@ PROMPT_TEXT = "You are a helpful assistant.<|endofprompt|>希望你以后能够�
 PROMPT_WAV = "/opt/CosyVoice/asset/zero_shot_prompt.wav"
 
 # Qwen3-TTS CustomVoice needs no reference clip; it has built-in speakers.
-# Vivian is one of its Chinese preset voices.
-QWEN_SPEAKER = "Vivian"
+# Vivian is the default Chinese preset voice. Serena is the softer preset:
+# warm, gentle young female voice, per the official Qwen3-TTS model card.
+# The speaker is a --speaker parameter on the entrypoint, default Vivian,
+# so a Serena run writes to a separate output folder and never overwrites
+# the Vivian clips.
+QWEN_DEFAULT_SPEAKER = "Vivian"
 QWEN_INSTRUCT = "用自然平稳的语气朗读。"
 
 vol = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
@@ -191,10 +196,19 @@ def synth_cosyvoice3(sentence_ids: list[str]):
     cpu=2,
     memory=8192,
 )
-def synth_qwen(sentence_ids: list[str]):
+def synth_qwen(sentence_ids: list[str], speaker: str = QWEN_DEFAULT_SPEAKER):
     import torch
     import soundfile as sf
     from qwen_tts import Qwen3TTSModel
+
+    # Vivian keeps the original output folder. Any other speaker gets its
+    # own folder, so a Serena run cannot overwrite the Vivian clips.
+    output_dir = (
+        "qwen3-tts"
+        if speaker.lower() == QWEN_DEFAULT_SPEAKER.lower()
+        else f"qwen3-tts-{speaker.lower()}"
+    )
+    print(f"Qwen speaker: {speaker}, output dir: {output_dir}", flush=True)
 
     t0 = time.time()
     model = Qwen3TTSModel.from_pretrained(
@@ -213,24 +227,24 @@ def synth_qwen(sentence_ids: list[str]):
 
     for sid, text in _load_sentences(sentence_ids):
         s0 = time.time()
-        out_path = f"{OUTPUT_DIR}/qwen3-tts/{sid}.wav"
+        out_path = f"{OUTPUT_DIR}/{output_dir}/{sid}.wav"
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         wavs, sr = model.generate_custom_voice(
             text=text,
             language="Chinese",
-            speaker=QWEN_SPEAKER,
+            speaker=speaker,
             instruct=QWEN_INSTRUCT,
         )
         sf.write(out_path, wavs[0], sr)
         info = sf.info(out_path)
-        _report("qwen3-tts", sid, text, time.time() - s0, info.duration)
+        _report(output_dir, sid, text, time.time() - s0, info.duration)
         if torch.cuda.is_available():
             print(
                 f"peak VRAM: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB",
                 flush=True,
             )
     vol.commit()
-    print(f"ALL DONE qwen3-tts in {time.time() - t0:.0f}s", flush=True)
+    print(f"ALL DONE {output_dir} ({speaker}) in {time.time() - t0:.0f}s", flush=True)
 
 
 @app.function(
@@ -286,7 +300,7 @@ def synth_indextts2(sentence_ids: list[str]):
 
 
 @app.local_entrypoint()
-def main(model: str, sentences: str = ""):
+def main(model: str, sentences: str = "", speaker: str = QWEN_DEFAULT_SPEAKER):
     with open("tests/test_sentences.json", encoding="utf-8") as f:
         data = json.load(f)
     if sentences:
@@ -297,11 +311,11 @@ def main(model: str, sentences: str = ""):
     unknown = [i for i in ids if i not in known]
     if unknown:
         raise ValueError(f"unknown sentence ids: {unknown}")
-    print(f"model={model} sentences={ids}", flush=True)
+    print(f"model={model} sentences={ids} speaker={speaker}", flush=True)
     if model == "cosyvoice3":
         synth_cosyvoice3.remote(ids)
     elif model == "qwen3-tts":
-        synth_qwen.remote(ids)
+        synth_qwen.remote(ids, speaker=speaker)
     elif model == "indextts2":
         synth_indextts2.remote(ids)
     elif model == "s1-mini":
